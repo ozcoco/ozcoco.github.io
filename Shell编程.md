@@ -167,9 +167,100 @@ wc -w < out	//2
 
 ### find
 
-```shell
+find [-H] [-L] [-P] [-D debugopts] [-Olevel] [starting-point...] [expression]
 
+#### -name
+
+```shell
+find . -name "*.sh"
 ```
+
+#### -type
+
+​	f	普通文件
+
+​	d	文件夹
+
+​	p	管道
+
+​	c	字符设备
+
+​	b	块设备
+
+​	s	socket
+
+​	l	软连接
+
+```shell
+find . -type l
+```
+
+#### -size
+
+​	默认单位：512b ---> 0.5k -->  一个磁盘扇区大小
+
+​	b,k,M
+
+```shell
+find /tmp -size +3M -size -7M	//大于3M小于7M的文件
+```
+
+#### -maxdepth
+
+​	递归深度：-maxdepth 2
+
+```shell
+find /usr -maxdepth 2 -type l | wc -l
+```
+
+#### -exec
+
+整批处理
+
+```shell
+find . -name "*.sh" -exec ls -lh {} \;	//{}代表find语句，\;结束符号
+```
+
+#### -print
+
+```shell
+find . -name "*.sh" print0 | xargs -0 ls -hl //在find结果的每一条item后追加0字符
+```
+
+#### -xargs
+
+​	分批处理
+
+```shell
+find . -name "*.sh" print0 | xargs -0 ls -hl //以0为分隔符拆分items
+```
+
+#### -atime -amin -mtime -mmin -ctime
+
+​	time：天
+
+​	min:	分钟
+
+```shell
+File: while.sh
+  Size: 150       	Blocks: 1          IO Block: 4096   regular file
+Device: 811h/2065d	Inode: 1167696     Links: 1
+Access: (0777/-rwxrwxrwx)  Uid: ( 1000/ ozcomcn)   Gid: ( 1000/ ozcomcn)
+Context: system_u:object_r:fusefs_t:s0
+Access: 2019-10-26 15:25:03.018047300 +0800	//访问时间
+Modify: 2019-10-26 15:24:57.739388200 +0800	//文件修改时间
+Change: 2019-10-26 15:24:57.739388200 +0800	//文件属性修改时间
+ Birth: -
+```
+
+
+
+```shell
+find -amin +5	//5min前
+find -atime +5	//5天前
+```
+
+
 
 ### sed
 
