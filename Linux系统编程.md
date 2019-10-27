@@ -162,7 +162,53 @@ void recycle_child_task()
 ### 守护进程
 
 ```c++
+#include <cstdio>
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <wait.h>
 
+void create_daemon_task()
+{
+    pid_t pid, sid;
+
+    pid = fork();
+
+    if (pid > 0)
+        exit(0);
+
+    setsid();
+
+    if (chdir("/tmp"))
+    {
+        perror("Change dir error");
+
+        exit(1);
+    }
+
+    umask(0002);
+
+    close(STDIN_FILENO);
+
+    open("/dev/null", O_RDWR);
+
+    dup2(0, STDOUT_FILENO);
+
+    dup2(0, STDERR_FILENO);
+
+    int count = 0;
+
+    while (1)
+    {
+        count++;
+
+        write(STDOUT_FILENO, &count, sizeof(count));
+
+        sleep(1);
+
+    }
+
+}
 ```
 
 
@@ -383,6 +429,39 @@ int main()
     fifo_name();
 
     return 0;
+}
+```
+
+### 高级管道（popen）
+
+```c++
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <memory.h>
+#include <fcntl.h>
+
+void pipe_popen()
+{
+
+    char cmd[] = "ls";
+
+    FILE *p = popen(cmd, "r");
+
+    char buf[256];
+
+    while (fgets(buf, 256, p))
+    {
+
+        printf("%s", buf);
+
+    }
+
+    pclose(p);
+
 }
 ```
 
@@ -698,6 +777,32 @@ void file_unlink_access()
 }
 ```
 
+#### 标准输入（0），标准输出（1），标准错误（2）
+
+```c
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <memory.h>
+#include <fcntl.h>
+#include <sys/msg.h>
+#include <algorithm>
+
+void stdout_dev()
+{
+    printf("Main precess pid: %u \t thread id = %lu\n", getpid(), pthread_self());
+
+    char str[] = "213542363457";
+
+    write(STDOUT_FILENO, str, sizeof(str) - 1);
+    
+    printf("%d\n%d\n%d\n", STDOUT_FILENO, STDIN_FILENO, STDERR_FILENO);
+}
+```
+
 
 
 ### 共享内存（shared memory）
@@ -808,6 +913,31 @@ void c_shm()
 
 
 
+### 消息队列（msg）
+
+```c
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <memory.h>
+#include <fcntl.h>
+#include <sys/msg.h>
+
+void msg_queue()
+{
+//    ftok();
+//    msgget(123, 0666 | IPC_CREAT);
+//    msgrcv()
+//    msgsnd()
+//    msgctl()
+}
+```
+
+
+
 ### 内存映射（mmap）
 
 ```c++
@@ -846,6 +976,8 @@ void signal_alarm()
 
 
 #### 捕获信号
+
+##### 发送给自己（alarm、reise、abort）
 
 ```c++
 #include <iostream>
@@ -890,6 +1022,73 @@ void capture_signal()
     alarm(2);
 
     while (1);
+
+}
+```
+
+##### 发送给指定进程（kill）
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void sig_kill_with_c()
+{
+
+    void (*handle)(int) = [](int sig) -> void
+    {
+        printf("signal:%s\n", strsignal(sig));
+
+    };
+
+    signal(SIGBUS, handle);
+
+    kill(getpid(), SIGBUS);
+
+}
+
+```
+
+
+
+### 带参信号（sigqueue）
+
+```c
+#include <signal.h>
+
+void sigqueue_with_pure_c()
+{
+    struct Anim
+    {
+        char name[20];
+        int age;
+    };
+
+    struct Anim sigVal{"oneko", 12};
+
+    struct sigaction my_sigaction{};
+
+    sigemptyset(&my_sigaction.sa_mask);
+
+    my_sigaction.sa_flags = SA_SIGINFO;
+
+    my_sigaction.sa_sigaction = [](int sig, siginfo_t *info, void *ucontext) -> void
+    {
+        struct Anim *revVal = (struct Anim *) info->si_ptr;
+
+        printf("name: %s\narg: %d", revVal->name, revVal->age);
+
+    };
+
+    sigaction(SIGBUS, &my_sigaction, NULL);
+
+    union sigval mysigVal{};
+
+    mysigVal.sival_ptr = &sigVal;
+
+    sigqueue(getpid(), SIGBUS, mysigVal);
 
 }
 ```
@@ -1414,43 +1613,905 @@ void test_toUpper()
 
 ```
 
+#### 开源库
+
+##### libevent
+
+```shell
+
+```
+
 
 
 ## inotify
 
-```c++
+监听目录状态变化
 
+```c
+#include <errno.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/inotify.h>
+#include <unistd.h>
+
+static void
+handle_events(int fd, int *wd, int argc, char *argv[])
+{
+    /* Some systems cannot read integer variables if they are not
+       properly aligned. On other systems, incorrect alignment may
+       decrease performance. Hence, the buffer used for reading from
+       the inotify file descriptor should have the same alignment as
+       struct inotify_event. */
+
+    char buf[4096]
+            __attribute__ ((aligned(__alignof__(struct inotify_event))));
+    const struct inotify_event *event;
+    int i;
+    ssize_t len;
+    char *ptr;
+
+    /* Loop while events can be read from inotify file descriptor. */
+
+    for (;;)
+    {
+
+        /* Read some events. */
+
+        len = read(fd, buf, sizeof buf);
+        if (len == -1 && errno != EAGAIN)
+        {
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+
+        /* If the nonblocking read() found no events to read, then
+           it returns -1 with errno set to EAGAIN. In that case,
+           we exit the loop. */
+
+        if (len <= 0)
+            break;
+
+        /* Loop over all events in the buffer */
+
+        for (ptr = buf; ptr < buf + len;
+             ptr += sizeof(struct inotify_event) + event->len)
+        {
+
+            event = (const struct inotify_event *) ptr;
+
+            /* Print event type */
+
+            if (event->mask & IN_OPEN)
+                printf("IN_OPEN: ");
+            if (event->mask & IN_CLOSE_NOWRITE)
+                printf("IN_CLOSE_NOWRITE: ");
+            if (event->mask & IN_CLOSE_WRITE)
+                printf("IN_CLOSE_WRITE: ");
+
+            /* Print the name of the watched directory */
+
+            for (i = 1; i < argc; ++i)
+            {
+                if (wd[i] == event->wd)
+                {
+                    printf("%s/", argv[i]);
+                    break;
+                }
+            }
+
+            /* Print the name of the file */
+
+            if (event->len)
+                printf("%s", event->name);
+
+            /* Print type of filesystem object */
+
+            if (event->mask & IN_ISDIR)
+                printf(" [directory]\n");
+            else
+                printf(" [file]\n");
+        }
+    }
+}
+
+
+void inotify_with_c(int argc, char *argv[])
+{
+    char buf;
+    int fd, i, poll_num;
+    int *wd;
+    nfds_t nfds;
+    struct pollfd fds[2];
+
+    if (argc < 2)
+    {
+        printf("Usage: %s PATH [PATH ...]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Press ENTER key to terminate.\n");
+
+    /* Create the file descriptor for accessing the inotify API */
+
+    fd = inotify_init1(IN_NONBLOCK);
+    if (fd == -1)
+    {
+        perror("inotify_init1");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Allocate memory for watch descriptors */
+
+    wd = static_cast<int *>(calloc(argc, sizeof(int)));
+    if (wd == NULL)
+    {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Mark directories for events
+       - file was opened
+       - file was closed */
+
+    for (i = 1; i < argc; i++)
+    {
+        wd[i] = inotify_add_watch(fd, argv[i],
+                                  IN_OPEN | IN_CLOSE);
+        if (wd[i] == -1)
+        {
+            fprintf(stderr, "Cannot watch '%s'\n", argv[i]);
+            perror("inotify_add_watch");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    /* Prepare for polling */
+
+    nfds = 2;
+
+    /* Console input */
+
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    /* Inotify input */
+
+    fds[1].fd = fd;
+    fds[1].events = POLLIN;
+
+    /* Wait for events and/or terminal input */
+
+    printf("Listening for events.\n");
+    while (1)
+    {
+        poll_num = poll(fds, nfds, -1);
+        if (poll_num == -1)
+        {
+            if (errno == EINTR)
+                continue;
+            perror("poll");
+            exit(EXIT_FAILURE);
+        }
+
+        if (poll_num > 0)
+        {
+
+            if (fds[0].revents & POLLIN)
+            {
+
+                /* Console input is available. Empty stdin and quit */
+
+                while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n')
+
+                    continue;
+                break;
+            }
+
+            if (fds[1].revents & POLLIN)
+            {
+
+                /* Inotify events are available */
+
+                handle_events(fd, wd, argc, argv);
+            }
+        }
+    }
+
+    printf("Listening for events stopped.\n");
+
+    /* Close inotify file descriptor */
+
+    close(fd);
+
+    free(wd);
+    exit(EXIT_SUCCESS);
+
+}
+
+int main()
+{
+    const char *argv[] = {"test", "/tmp"};
+
+    inotify_with_c(sizeof argv / sizeof argv[0], const_cast<char **>(argv));
+
+	return 0;
+}
 ```
 
 
 
 ## 线程
 
+### 简单线程
+
 ```c++
+#include <pthread.h>
+#include <iostream>
+
+void *task_a(void *arg)
+{
+    auto no = reinterpret_cast<long int>(arg);
+
+    for (;;)
+    {
+        printf("Thread %ld precess pid: %u \t thread id = %lu\n", no, getpid(), pthread_self());
+
+        sleep(1);
+
+    }
+}
+
+void create_thread()
+{
+    printf("Main precess pid: %u \t thread id = %lu\n", getpid(), pthread_self());
+
+    pthread_t tid;
+
+    for (int i = 0; i < 5; i++)
+    {
+        pthread_create(&tid, nullptr, task_a, reinterpret_cast<void *>(i));
+    }
+
+    sleep(1);
+
+    printf("Main thread exit \n");
+
+//    pthread_exit(nullptr);
+
+//    exit(0);
+    return;
+}
 
 ```
+
+### 带参线程
+
+```c++
+#include <pthread.h>
+#include <iostream>
+
+struct run_arg_t
+{
+    int num;
+    char data[50];
+};
+
+typedef struct run_arg_t run_arg_t;
+
+
+void thread_exit()
+{
+
+    printf("Main precess pid: %u \t thread id = %lu\n", getpid(), pthread_self());
+
+    auto run = [](void *arg) -> void *
+    {
+
+        printf("this tid:%lu \n", pthread_self());
+
+        auto *runArg = (run_arg_t *) arg;
+
+        runArg->num = 123456789;
+
+        strcpy(runArg->data, "123456789");
+
+        usleep(2000);
+
+        pthread_testcancel();
+
+        pthread_exit(runArg);
+
+        return arg;
+    };
+
+    pthread_t tid;
+
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+
+    size_t get_size;
+
+    pthread_attr_getstacksize(&attr, &get_size);
+
+    printf("thread default stack size:%ld\n", get_size);
+
+    size_t stack_size = 100000000;
+
+    void *stack = malloc(stack_size);
+
+    pthread_attr_setstack(&attr, stack, stack_size);
+
+//    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+    run_arg_t runArg = {123, "sdfsfsfsj"};
+
+    runArg.num = 1;
+
+    strcpy(runArg.data, "231423535634");
+
+    printf("num=%d, data = %s\n", runArg.num, runArg.data);
+
+    pthread_create(&tid, &attr, run, &runArg);
+
+    printf("Main tid:%lu \n", pthread_self());
+
+    printf("Child tid:%lu \n", tid);
+
+    pthread_cancel(tid);
+
+    pthread_attr_destroy(&attr);
+
+    run_arg_t *retArg;
+
+    int ret = pthread_join(tid, (void **) &retArg);
+
+    if (ret == 0)
+    {
+        printf("ret arg num=%d, data = %s\n", retArg->num, retArg->data);
+    } else
+    {
+
+        printf("detach recycle thread\n");
+
+    }
+
+    usleep(1000);
+
+    free(stack);
+}
+
+```
+
+### 最大线程数
+
+```c++
+#include <pthread.h>
+#include <iostream>
+
+void create_max_thread()
+{
+    struct run_arg_t
+    {
+        int num;
+        char data[50];
+    };
+
+    typedef struct run_arg_t run_arg_t;
+
+
+    printf("Main precess pid: %u \t thread id = %lu\n", getpid(), pthread_self());
+
+    auto run = [](void *arg) -> void *
+    {
+        printf("thread %ld tid:%lu \n", reinterpret_cast<long int>(arg), pthread_self());
+
+//        usleep(10);
+
+        for (;;);
+
+        pthread_exit(arg);
+    };
+
+    pthread_t tid;
+
+    void *stack = nullptr;
+
+    int ret;
+
+    for (int i = 0; i < 1000000; i++)
+    {
+        pthread_attr_t attr;
+
+        pthread_attr_init(&attr);
+
+        size_t get_size;
+
+        pthread_attr_getstacksize(&attr, &get_size);
+
+        printf("thread default stack size:%ld\n", get_size);
+
+        size_t stack_size = 100000000;
+
+        stack = malloc(stack_size);
+
+        pthread_attr_setstack(&attr, stack, stack_size);
+
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+        ret = pthread_create(&tid, &attr, run, reinterpret_cast<void *>(i));
+
+        if (ret == 0)
+        {
+            printf("create %lu thread %d \n", tid, i);
+        } else
+        {
+            static int count = 0;
+
+            count++;
+
+            perror(strerror(ret));
+
+            if (count < 5)
+                continue;
+            else
+                break;
+        }
+
+        pthread_attr_destroy(&attr);
+    }
+
+    free(stack);
+}
+```
+
+
 
 ### mutex
 
+#### c++版本
+
 ```c++
+#include <pthread.h>
+#include <iostream>
+
+void thread_sync_mutex_whit_cxx()
+{
+    struct Runnable
+    {
+        virtual void *run(void *) noexcept = 0;
+
+    };
+
+    struct Run : Runnable
+    {
+        pthread_mutex_t mutex;
+
+        int count;
+
+        inline Run() noexcept : count(0), mutex(pthread_mutex_t{})
+        {
+            pthread_mutex_init(&mutex, nullptr);
+        }
+
+        inline virtual ~Run() noexcept
+        {
+            pthread_mutex_destroy(&mutex);
+        }
+
+        inline void *run(void *arg) noexcept final
+        {
+
+            for (;;)
+            {
+                pthread_mutex_lock(&mutex);
+
+                auto index = reinterpret_cast<long>(arg);
+
+                if (index)
+                    printf("count:%d \n", count);
+                else
+                    count++;
+
+//                sleep(1);
+
+                pthread_mutex_unlock(&mutex);
+            }
+
+            pthread_exit(arg);
+
+            /*int ret;
+
+             for (;;)
+                 if (ret = pthread_mutex_lock(&mutex) == 0)
+                 {
+                     auto index = reinterpret_cast<long>(arg);
+
+                     if (index)
+                         printf("count:%d \n", count);
+                     else
+                         count++;
+
+                     pthread_mutex_unlock(&mutex);
+
+                 } else
+                 {
+                     printf("Cant't lock, error:%s\n", strerror(ret));
+                 }*/
+        }
+
+        inline void *operator()(void *arg) noexcept
+        {
+            return run(arg);
+        }
+
+
+        static void *running(void *arg) noexcept
+        {
+            static Run run{};
+
+            return run(arg);
+        }
+    };
+
+    pthread_t tids[2];
+
+    pthread_create(tids, nullptr, Run::running, (void *) 0);
+
+    pthread_create(tids + 1, nullptr, Run::running, (void *) 1);
+
+    usleep(1000);
+
+    pthread_join(tids[0], nullptr);
+    pthread_join(tids[1], nullptr);
+
+}
 
 ```
+
+
+
+#### 纯c++版本
+
+```c++
+#include <thread>
+#include <mutex>
+#include <iostream>
+
+void thread_sync_mutex_whit_pure_cxx()
+{
+
+    class Running
+    {
+        virtual void run(int i) noexcept = 0;
+    };
+
+    class Runner : Running
+    {
+    private:
+        std::mutex mutex1{};
+        int count;
+
+    public:
+        Runner() : count(0) {}
+
+        inline void operator()(int i) noexcept
+        {
+            run(i);
+        }
+
+        inline void run(int i) noexcept override
+        {
+
+            for (;;)
+            {
+                mutex1.lock();
+
+                if (i % 2)
+                {
+                    count++;
+                } else
+                {
+                    std::cout << "thread id: " << std::this_thread::get_id() << "\t count = " << count << std::endl;
+                }
+
+                mutex1.unlock();
+            }
+        }
+
+    };
+
+    std::vector<std::thread> threads;
+
+    Runner runner{};
+
+    for (int i = 0; i < 5; i++)
+    {
+        threads.push_back(std::thread(std::ref(runner), i));
+    }
+
+    for (auto &th: threads)
+        th.join();
+}
+
+```
+
+
+
+#### 纯c版本
+
+```c
+#include <pthread.h>
+#include <iostream>
+
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int count = 0;
+
+void *running1(void *arg)
+{
+    for (;;)
+    {
+        pthread_mutex_lock(&mutex);
+
+        count++;
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    pthread_exit(arg);
+}
+
+void *running2(void *arg)
+{
+    for (;;)
+    {
+        pthread_mutex_lock(&mutex);
+
+        printf("count:%d \n", count);
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    pthread_exit(arg);
+}
+
+void thread_sync_mutex_with_c()
+{
+
+    pthread_t tids[2];
+
+    pthread_create(tids, nullptr, running1, (void *) 0);
+
+    pthread_create(tids + 1, nullptr, running2, (void *) 1);
+
+    usleep(1000);
+
+    pthread_join(tids[0], nullptr);
+    pthread_join(tids[1], nullptr);
+
+    pthread_mutex_destroy(&mutex);
+}
+
+```
+
+
 
 ### 条件变量（condition）
 
 ```c++
+#include <pthread.h>
+#include <iostream>
 
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+
+void *running_cond1(void *arg)
+{
+    for (;;)
+    {
+        pthread_mutex_lock(&mutex);
+
+        pthread_cond_signal(&cond);
+
+        pthread_cond_wait(&cond, &mutex);
+
+        count++;
+
+        pthread_cond_signal(&cond);
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    pthread_exit(arg);
+}
+
+
+void *running_cond2(void *arg)
+{
+
+    for (;;)
+    {
+        pthread_mutex_lock(&mutex);
+
+        pthread_cond_signal(&cond);
+
+        pthread_cond_wait(&cond, &mutex);
+
+        printf("count:%d \n", count);
+
+        pthread_cond_signal(&cond);
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    pthread_exit(arg);
+}
+
+void thread_cond_mutex_with_c()
+{
+    pthread_t tids[2];
+
+    pthread_create(tids, nullptr, running_cond1, (void *) 0);
+
+    pthread_create(tids + 1, nullptr, running_cond2, (void *) 1);
+
+    usleep(1000);
+
+    pthread_join(tids[0], nullptr);
+    pthread_join(tids[1], nullptr);
+
+    pthread_mutex_destroy(&mutex);
+
+    pthread_cond_destroy(&cond);
+
+}
 ```
 
 ### 信号量（semaphore）
 
 ```c++
+#include <semaphore.h>
+#include <pthread.h>
+#include <iostream>
 
+sem_t sem;
+
+void *running_sem(void *arg)
+{
+    for (;;)
+    {
+        sem_wait(&sem);
+
+        long int index = (long int) arg;
+        printf("thread %lu ...\n", index);
+
+        sem_post(&sem);
+
+        sleep(1);
+    }
+
+    pthread_exit(nullptr);
+}
+
+
+void thread_sem_with_c()
+{
+    sem_init(&sem, 0, 1);
+
+    pthread_t tids[7];
+
+    for (int i = 0; i < 7; i++)
+        pthread_create(tids + i, nullptr, running_sem, reinterpret_cast<void *>(i));
+
+    usleep(1000);
+
+    for (int i = 0; i < 7; i++)
+        pthread_join(tids[i], nullptr);
+
+    sem_destroy(&sem);
+}
 ```
 
 ### 屏障（barrier）
 
 ```c++
+#include <pthread.h>
+#include <iostream>
+
+pthread_barrier_t barrier;
+
+void *running_barrier1(void *arg)
+{
+
+    sleep(1);
+
+    long int index = (long int) arg;
+
+    printf("thread %lu waiting.... \n", index);
+
+    pthread_barrier_wait(&barrier);
+
+    printf("thread %lu running.... \n", index);
+
+    for (int i = 0;; i++)
+    {
+
+        sleep(i % 3);
+
+        printf("thread %lu %d'th count waiting.... \n", index, i);
+
+        pthread_barrier_wait(&barrier);
+
+        printf("thread %lu %d'th count  starting.... \n", index, i);
+
+        sleep(1);
+
+        count++;
+
+        pthread_barrier_wait(&barrier);
+
+    }
+
+    pthread_exit(arg);
+}
+
+
+void *running_barrier2(void *arg)
+{
+
+    sleep(3);
+
+    long int index = (long int) arg;
+
+    printf("thread %lu waiting.... \n", index);
+
+    pthread_barrier_wait(&barrier);
+
+    printf("thread %lu running.... \n", index);
+
+    for (int i = 0;; i++)
+    {
+
+        sleep(i % 5);
+
+        printf("thread %lu %d'th print  waiting.... \n", index, i);
+
+        pthread_barrier_wait(&barrier);
+
+        printf("thread %lu  %d'th print  starting.... \n", index, i);
+
+        sleep(1);
+
+        printf("thread %lu print count:%d \n", index, count);
+
+        pthread_barrier_wait(&barrier);
+    }
+
+    pthread_exit(arg);
+}
+
+
+void thread_barrier_with_c()
+{
+    pthread_barrier_init(&barrier, nullptr, 2);
+
+    pthread_t tids[2];
+
+    pthread_create(tids, nullptr, running_barrier1, (void *) 0);
+
+    pthread_create(tids + 1, nullptr, running_barrier2, (void *) 1);
+
+    usleep(1000);
+
+    pthread_join(tids[0], nullptr);
+
+    pthread_join(tids[1], nullptr);
+
+    pthread_barrier_destroy(&barrier);
+}
 
 ```
 
