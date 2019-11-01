@@ -325,6 +325,140 @@ class Tuple implements Externalizable {
 ### 动态代理
 
 ```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+public class DynamicProxy {
+
+    public static void main(String[] args) {
+
+        DynamicTest2 dynamicTest2 = new DynamicTest2();
+
+        IDynamicTest dynamicTest = (IDynamicTest) Proxy.newProxyInstance(
+                LogHandler.class.getClassLoader(),
+                new Class[]{IDynamicTest.class},
+                new LogHandler(dynamicTest2, new ThreadLogger()));
+
+        dynamicTest.print();
+
+        dynamicTest.print2();
+
+    }
+
+}
+
+
+interface IDynamicTest {
+
+    void print();
+
+    void print2();
+
+}
+
+
+class DynamicTest2 implements IDynamicTest {
+
+    @Override
+    public void print() {
+
+        System.out.println("DynamicTest2");
+
+    }
+
+    @Override
+    public void print2() {
+
+    }
+}
+
+
+class DynamicTest3 implements IDynamicTest {
+
+    @Override
+    public void print() {
+
+        System.out.println("DynamicTest3");
+
+    }
+
+    @Override
+    public void print2() {
+
+    }
+}
+
+interface ILogger {
+
+    void d(String msg);
+
+    void w(String msg);
+
+    void e(String msg);
+
+    void i(String msg);
+
+}
+
+
+class ThreadLogger implements ILogger {
+
+
+    private void print(String msg) {
+
+        System.out.println(Thread.currentThread().getName() + "---->" + msg);
+
+    }
+
+    @Override
+    public void d(String msg) {
+        print("D:\t" + msg);
+    }
+
+    @Override
+    public void w(String msg) {
+        print("W:\t" + msg);
+    }
+
+    @Override
+    public void e(String msg) {
+        print("E:\t" + msg);
+    }
+
+    @Override
+    public void i(String msg) {
+        print("I:\t" + msg);
+    }
+}
+
+
+class LogHandler implements InvocationHandler {
+
+    private final ILogger mLogger;
+
+    private final Object mTarget;
+
+    public LogHandler(Object target, ILogger logger) {
+
+        this.mTarget = target;
+
+        this.mLogger = logger;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+        mLogger.d("enter-->" + method.getName());
+
+        final Object result = method.invoke(mTarget, args);
+
+        mLogger.d("exit-->" + method.getName());
+
+        return result;
+    }
+}
+
 
 ```
 

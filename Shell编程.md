@@ -4,9 +4,409 @@
 
 ## 常用命令
 
-### rsync （文件夹同步）
+> 日 志 文 件 说 明
+>
+
+- /var/log/message 系统启动后的信息和错误日志，是Red Hat Linux中最常用的日志之一
+
+- /var/log/secure 与安全相关的日志信息
+
+- /var/log/maillog 与邮件相关的日志信息
+
+- /var/log/cron 与定时任务相关的日志信息
+
+- /var/log/spooler 与UUCP和news设备相关的日志信息
+
+- /var/log/boot.log 守护进程启动和停止相关的日志消息
+
+> 系统
+>
+
+- uname -a # 查看内核/操作系统/CPU信息
+
+- cat /etc/issue
+
+- cat /etc/redhat-release # 查看操作系统版本  Enterprise Linux Enterprise Linux Server release 5.1 (Carthage)企业Linux服务器版本迦太基
+
+- cat /proc/cpuinfo # 查看CPU信息
+
+- hostname # 查看计算机名
+
+- lspci -tv # 列出所有PCI设备
+
+- lsusb -tv # 列出所有USB设备
+
+- lsmod # 列出加载的内核模块
+
+- env # 查看环境变量
+
+
+> 资源
+>
+
+- free -m # 查看内存使用量和交换区使用量
+
+- df -h # 查看各分区使用情况
+
+- du -sh <目录名> # 查看指定目录的大小
+
+- grep MemTotal /proc/meminfo # 查看内存总量
+
+- grep MemFree /proc/meminfo # 查看空闲内存量
+
+- uptime # 查看系统运行时间、用户数、负载
+
+- cat /proc/loadavg # 查看系统负载
+
+
+> 磁盘和分区
+>
+
+-  mount | column -t # 查看挂接的分区状态
+
+-  fdisk -l # 查看所有分区
+
+-  swapon -s # 查看所有交换分区
+
+-  hdparm -i /dev/hda # 查看磁盘参数(仅适用于IDE设备)
+
+-  dmesg | grep IDE # 查看启动时IDE设备检测状况
+
+
+> 网络
+>
+
+-  ifconfig # 查看所有网络接口的属性
+
+-  iptables -L # 查看防火墙设置
+
+-  route -n # 查看路由表
+
+- netstat -lntp # 查看所有监听端口
+
+-  netstat -antp # 查看所有已经建立的连接
+
+-  netstat -s # 查看网络统计信息
+
+
+> 进程
+>
+
+-  ps -ef # 查看所有进程
+
+- top # 实时显示进程状态
+
+
+> 用户
+>
+
+-  w # 查看活动用户
+
+-  id <用户名> # 查看指定用户信息
+
+-  last # 查看用户登录日志
+
+-  cut -d: -f1 /etc/passwd # 查看系统所有用户
+
+-  cut -d: -f1 /etc/group # 查看系统所有组
+
+-  crontab -l # 查看当前用户的计划任务
+
+
+> 服务
+>
+
+-  chkconfig –list # 列出所有系统服务
+
+-  chkconfig –list | grep on # 列出所有启动的系统服务
+
+
+> 程序
+>
+
+-  rpm -qa # 查看所有安装的软件包
+
+
+
+
+
+### 用户管理
+
+#### groupadd
+
+Options:
+  -f, --force                   exit successfully if the group already exists,
+                                and cancel -g if the GID is already used
+  -g, --gid GID                 use GID for the new group
+  -h, --help                    display this help message and exit
+  -K, --key KEY=VALUE           override /etc/login.defs defaults
+  -o, --non-unique              allow to create groups with duplicate
+                                (non-unique) GID
+  -p, --password PASSWORD       use this encrypted password for the new group
+  -r, --system                  create a system account
+  -R, --root CHROOT_DIR         directory to chroot into
+  -P, --prefix PREFIX_DIR       directory prefix
+
+##### 查看系统所有用户组
+
+```shell
+cat /etc/group | awk 'BEGIN{FS=":"} {print $1} {count=count+1} END{printf "count:%d\n",count}'
+```
+
+##### 添加新用户组
+
+```shell
+groupadd test	//add test group
+groupdel test	//del test group
+```
+
+
+
+#### useradd
+
+Options:
+  -b, --base-dir BASE_DIR       base directory for the home directory of the
+                                new account
+  -c, --comment COMMENT         GECOS field of the new account
+  -d, --home-dir HOME_DIR       home directory of the new account
+  -D, --defaults                print or change default useradd configuration
+  -e, --expiredate EXPIRE_DATE  expiration date of the new account
+  -f, --inactive INACTIVE       password inactivity period of the new account
+  -g, --gid GROUP               name or ID of the primary group of the new
+                                account
+  -G, --groups GROUPS           list of supplementary groups of the new
+                                account
+  -h, --help                    display this help message and exit
+  -k, --skel SKEL_DIR           use this alternative skeleton directory
+  -K, --key KEY=VALUE           override /etc/login.defs defaults
+  -l, --no-log-init             do not add the user to the lastlog and
+                                faillog databases
+  -m, --create-home             create the user's home directory
+  -M, --no-create-home          do not create the user's home directory
+  -N, --no-user-group           do not create a group with the same name as
+                                the user
+  -o, --non-unique              allow to create users with duplicate
+                                (non-unique) UID
+  -p, --password PASSWORD       encrypted password of the new account
+  -r, --system                  create a system account
+  -R, --root CHROOT_DIR         directory to chroot into
+  -P, --prefix PREFIX_DIR       prefix directory where are located the /etc/* files
+  -s, --shell SHELL             login shell of the new account
+  -u, --uid UID                 user ID of the new account
+  -U, --user-group              create a group with the same name as the user
+  -Z, --selinux-user SEUSER     use a specific SEUSER for the SELinux user mapping
+
+##### 查看系统用户
+
+```shell
+cat /etc/passwd | awk 'BEGIN{FS=":"} {print $1} {count=count+1} END{printf("count:%d\n",count)}'
+```
+
+##### 创建新用户
+
+```shell
+groupadd test2
+useradd -m -g test2 test2
+```
+
+##### 修改用户
+
+```shell
+usermod -a -G root test2
+[root@localhost home]# id test2
+uid=1001(test2) gid=1001(test2) groups=1001(test2),0(root)
+```
+
+##### 删除用户
+
+```shell
+userdel test2
+```
+
+
+
+### 权限管理
+
+```shell
+touch file2
+chmod u+x file2	//为文件所有者增加可执行权限
+chmod g+w file2 //为文件所属组增加可写权限
+chmod o+w file2	//为文件其他用户增加可写权限
+```
+
+### 磁盘管理
 
 ```
+
+```
+
+
+
+### ab（http服务器压力测试）
+
+```shell
+ab -c 1 -n 10000 https://www.baidu.com/index.html
+```
+
+### dstat（系统资源监控）
+
+```shell
+#输出监控信息并把监控信息导出为cvs文件
+[root@org-oz learn]# dstat --output dstat.cvs
+You did not select any stats, using -cdngy by default.
+----total-usage---- -dsk/total- -net/total- ---paging-- ---system--
+usr sys idl wai stl| read  writ| recv  send|  in   out | int   csw 
+  0   0 100   0   0|   0     0 |  66   673 |   0     0 | 114   209 
+  0   0  99   0   0|   0     0 | 284   514 |   0     0 | 111   200 
+  0   1 100   0   0|   0     0 | 242   514 |   0     0 | 146   203 
+  0   0 100   0   0|   0     0 |  66   354 |   0     0 | 125   197 
+  0   0 100   0   0|   0     0 |  66   338 |   0     0 | 124   197 
+  0   0 100   0   0|   0    12k|  66   338 |   0     0 | 125   226 
+  0   0 100   0   0|   0     0 | 108   424 |   0     0 | 130   198 
+  0   0  99   0   0|   0     0 |  66   338 |   0     0 | 134   211 
+  0   0 100   0   0|   0     0 | 168   432 |   0     0 | 125   202 
+  0   0 100   0   0|   0     0 |  66   338 |   0     0 | 125   186 
+  0   0 100   0   0|   0     0 |  66   338 |   0     0 | 132   197 
+  1   0  99   0   0|   0    12k|3652   338 |   0     0 | 199   250 
+  0   0  99   0   0|   0    64k|  66   354 |   0     0 | 203   244 
+
+```
+
+### tcpdump（网络抓包）
+
+```shell
+tcpdump -c 10 -w tcpdump.log	//抓去10个包导出到tcpdump.log文件
+tcpdump -r tcpdump.log	//读取tcpdump.log文件
+```
+
+#### -v -vv（输出详细信息）
+
+```shell
+[root@org-oz learn]# tcpdump -c 3 -v
+tcpdump: listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+18:46:22.291025 IP (tos 0x48, ttl 64, id 41450, offset 0, flags [DF], proto TCP (6), length 184)
+    org-oz.ssh > 192.168.0.106.46970: Flags [P.], cksum 0x36c2 (correct), seq 1138752128:1138752260, ack 4287140438, win 501, options [nop,nop,TS val 3373607179 ecr 1320782790], length 132
+18:46:22.291535 IP (tos 0x0, ttl 64, id 47843, offset 0, flags [DF], proto UDP (17), length 72)
+    org-oz.51063 > 192.168.1.1.domain: 30970+ PTR? 106.0.168.192.in-addr.arpa. (44)
+18:46:22.298384 IP (tos 0x48, ttl 64, id 41451, offset 0, flags [DF], proto TCP (6), length 184)
+    org-oz.ssh > 192.168.0.106.46970: Flags [P.], cksum 0x6a45 (correct), seq 132:264, ack 1, win 501, options [nop,nop,TS val 3373607186 ecr 1320782790], length 132
+3 packets captured
+13 packets received by filter
+0 packets dropped by kernel
+
+[root@org-oz learn]# tcpdump -c 3 -vv
+tcpdump: listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+18:46:26.130471 IP (tos 0x0, ttl 4, id 59600, offset 0, flags [none], proto UDP (17), length 288)
+    _gateway.ssdp > 239.255.255.250.ssdp: [udp sum ok] UDP, length 260
+18:46:26.133529 IP (tos 0x0, ttl 4, id 59602, offset 0, flags [none], proto UDP (17), length 297)
+    _gateway.ssdp > 239.255.255.250.ssdp: [udp sum ok] UDP, length 269
+18:46:26.137237 IP (tos 0x0, ttl 4, id 59604, offset 0, flags [none], proto UDP (17), length 360)
+    _gateway.ssdp > 239.255.255.250.ssdp: [udp sum ok] UDP, length 332
+3 packets captured
+19 packets received by filter
+0 packets dropped by kernel
+
+```
+
+#### -i（指定网卡）
+
+```shell
+//查看网卡
+[root@org-oz learn]# tcpdump -D
+1.wlp8s0 [Up, Running]
+2.lo [Up, Running, Loopback]
+3.any (Pseudo-device that captures on all interfaces) [Up, Running]
+4.enp9s0 [Up]
+5.virbr0 [Up]
+6.docker0 [Up]
+7.bluetooth-monitor (Bluetooth Linux Monitor) [none]
+8.nflog (Linux netfilter log (NFLOG) interface) [none]
+9.nfqueue (Linux netfilter queue (NFQUEUE) interface) [none]
+10.usbmon0 (All USB buses) [none]
+11.usbmon1 (USB bus number 1)
+12.usbmon2 (USB bus number 2)
+13.usbmon3 (USB bus number 3)
+14.usbmon4 (USB bus number 4)
+15.virbr0-nic [none]
+
+//指定网卡
+[root@org-oz learn]# tcpdump -i wlp8s0 -c 5
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+18:40:27.122188 IP org-oz.ssh > 192.168.0.106.46970: Flags [P.], seq 1138431304:1138431500, ack 4287138586, win 501, options [nop,nop,TS val 3373252010 ecr 1320427623], length 196
+18:40:27.122595 IP org-oz.36457 > 192.168.1.1.domain: 31910+ PTR? 106.0.168.192.in-addr.arpa. (44)
+18:40:27.131022 IP 192.168.0.106.46970 > org-oz.ssh: Flags [.], ack 196, win 8665, options [nop,nop,TS val 1320427674 ecr 3373252010], length 0
+18:40:27.133620 IP 192.168.1.1.domain > org-oz.36457: 31910 NXDomain* 0/0/0 (44)
+18:40:27.134733 IP org-oz.57080 > 192.168.1.1.domain: 30809+ PTR? 108.0.168.192.in-addr.arpa. (44)
+5 packets captured
+10 packets received by filter
+0 packets dropped by kernel
+```
+
+#### -n（不反解IP）
+
+```shell
+[root@org-oz learn]# tcpdump -n  -c 3
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+18:51:57.968506 IP 192.168.0.108.ssh > 192.168.0.106.46970: Flags [P.], seq 1140301172:1140301368, ack 4287147174, win 501, options [nop,nop,TS val 3373942856 ecr 1321118466], length 196
+18:51:57.968658 IP 192.168.0.108.ssh > 192.168.0.106.46970: Flags [P.], seq 196:424, ack 1, win 501, options [nop,nop,TS val 3373942856 ecr 1321118466], length 228
+18:51:57.970206 IP 192.168.0.108.ssh > 192.168.0.106.46970: Flags [P.], seq 424:636, ack 1, win 501, options [nop,nop,TS val 3373942858 ecr 1321118466], length 212
+3 packets captured
+5 packets received by filter
+0 packets dropped by kernel
+
+```
+
+#### 指定条件
+
+##### and
+
+```shell
+[root@org-oz learn]# tcpdump tcp and src 192.168.0.106 and port 22 and tcp and dst 192.168.0.108 and port 22 -c 3
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+19:13:55.477584 IP 192.168.0.106.46970 > org-oz.ssh: Flags [.], ack 1191319008, win 8665, options [nop,nop,TS val 1322436024 ecr 3375260360], length 0
+19:13:55.504468 IP 192.168.0.106.46970 > org-oz.ssh: Flags [.], ack 197, win 8665, options [nop,nop,TS val 1322436051 ecr 3375260382], length 0
+19:13:55.513865 IP 192.168.0.106.46970 > org-oz.ssh: Flags [.], ack 377, win 8665, options [nop,nop,TS val 1322436059 ecr 3375260393], length 0
+
+```
+
+or
+
+```shell
+[root@org-oz learn]# tcpdump tcp and src 192.168.0.106 and port 22 or tcp and src 192.168.0.108 and port 22 -c 3
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+19:16:40.332390 IP org-oz.ssh > 192.168.0.106.46970: Flags [P.], seq 1191323988:1191324184, ack 4287216830, win 719, options [nop,nop,TS val 3375425220 ecr 1322600849], length 196
+19:16:40.344478 IP org-oz.ssh > 192.168.0.106.46970: Flags [P.], seq 196:424, ack 1, win 719, options [nop,nop,TS val 3375425232 ecr 1322600889], length 228
+19:16:40.344789 IP org-oz.ssh > 192.168.0.106.46970: Flags [P.], seq 424:620, ack 1, win 719, options [nop,nop,TS val 3375425232 ecr 1322600889], length 196
+
+```
+
+not
+
+```shell
+[root@org-oz learn]# tcpdump not port 22 or icmp or udp
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on wlp8s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+19:18:34.711068 ARP, Request who-has org-oz tell _gateway, length 28
+19:18:34.711114 ARP, Reply org-oz is-at 44:6d:57:3d:8c:c9 (oui Unknown), length 28
+19:18:34.712406 IP org-oz.54910 > 192.168.1.1.domain: 55949+ PTR? 108.0.168.192.in-addr.arpa. (44)
+19:18:34.716653 IP 192.168.1.1.domain > org-oz.54910: 55949 NXDomain* 0/0/0 (44)
+19:18:34.717693 IP org-oz.33919 > 192.168.1.1.domain: 41751+ PTR? 1.0.168.192.in-addr.arpa. (42)
+19:18:34.738012 IP 192.168.1.1.domain > org-oz.33919: 41751 NXDomain* 0/0/0 (42)
+19:18:34.738995 IP org-oz.36638 > 192.168.1.1.domain: 13572+ PTR? 1.1.168.192.in-addr.arpa. (42)
+19:18:34.753458 IP 192.168.1.1.domain > org-oz.36638: 13572 NXDomain* 0/0/0 (42)
+19:18:39.967965 ARP, Request who-has _gateway tell org-oz, length 28
+19:18:39.983560 ARP, Reply _gateway is-at bc:54:fc:ca:95:32 (oui Unknown), length 28
+```
+
+
+
+### rsync （文件夹同步）
+
+```shell
 rsync -avu --delete "/home/user/A/" "/home/user/B"
 ```
 
@@ -403,6 +803,13 @@ echo "$$
 exit 0
 ```
 
+#### -n（打印指定行）
+
+```shell
+[root@org-oz docker_net]# docker network ls | sed -n '2p'	//打印第2行
+a24ce0ad29e4        bridge              bridge              local
+```
+
 
 
 ### awk
@@ -531,6 +938,12 @@ $  awk '{print $1,$2,$5}' OFS=" $ "  log.txt
 3 $ Are $ awk
 This's $ a $
 10 $ There $
+```
+
+##### NR（打印某一行）
+
+```shell
+docker network ls | awk 'NR==2{print $1}'	//打印第2行
 ```
 
 
@@ -743,6 +1156,144 @@ ozcomcn	40	29134	bash
 ozcomcn	40	30080	ps
 ozcomcn	40	30081	awk
 40
+
+```
+
+#### 引入外部参数
+
+##### -v
+
+```shell
+hello=1234567890
+awk -v hello=$hello 'BEGIN{print hello}'
+```
+
+##### ""
+
+```shell
+echo "132342" | awk "{print \"$hello\"}"
+```
+
+#### sort
+
+```shell
+[root@org-oz demo2]# printf "11\n11\n11\n33\n55\n44\n99\n66" | sort
+11
+11
+11
+33
+44
+55
+66
+99
+```
+
+##### -u（去重）
+
+```shell
+[root@org-oz demo2]# printf "11\n11\n11\n33\n55\n44\n99\n66" | sort -u
+11
+33
+44
+55
+66
+99
+```
+
+
+
+### 任务后台运行
+
+```shell
+ping 192.168.0.1 &   //后台运行，任务所在终端退出，任务结束
+
+nohup ping 192.168.0.108 &	//后台运行，nohup: ignoring input and appending output to 'nohup.out'，任务所在终端退出，任务继续运行
+```
+
+#### jobs（查看当前终端后台任务）
+
+Options:
+      -l	lists process IDs in addition to the normal information
+      -n	lists only processes that have changed status since the last
+    		notification
+      -p	lists process IDs only
+      -r	restrict output to running jobs
+      -s	restrict output to stopped jobs
+
+```shell
+jobs -l
+```
+
+#### fg
+
+```shell
+fg 1	//把后台任务放在前台运行
+```
+
+#### bg
+
+把已经暂停的任务放在后台运行
+
+```shell
+ping 192.168.0.1
+ctrl+z	//暂停任务
+bg	//把暂停状态的任务放在后台运行
+```
+
+#### seq
+
+打印数字序列
+
+> Usage: seq [OPTION]... LAST
+>   or:  seq [OPTION]... FIRST LAST
+>   or:  seq [OPTION]... FIRST INCREMENT LAST
+> Print numbers from FIRST to LAST, in steps of INCREMENT.
+>
+> Mandatory arguments to long options are mandatory for short options too.
+>   -f, --format=FORMAT      use printf style floating-point FORMAT
+>   -s, --separator=STRING   use STRING to separate numbers (default: \n)
+>   -w, --equal-width        equalize width by padding with leading zeroes
+>       --help     display this help and exit
+>       --version  output version information and exit
+
+```shell
+[ozcomcn@localhost ~]$ seq  1 10
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+[ozcomcn@localhost ~]$ seq 1 2 10
+1
+3
+5
+7
+9
+
+[ozcomcn@localhost ~]$ seq 10 -1 1
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+
+[ozcomcn@localhost ~]$ seq 10 -2 1
+10
+8
+6
+4
+2
 
 ```
 
