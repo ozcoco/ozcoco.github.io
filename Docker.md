@@ -806,6 +806,10 @@ d12a240afd85        host                host                local
 >   -o, --opt map                Set driver specific options (default map[])
 >       --subnet stringSlice     Subnet in CIDR format that represents a network segment
 
+##### 创建bridge网络
+
+> **docker network create -d bridge**
+
 ```shell
 docker network create -d bridge test-bridge	//创建一个bridge网络test-bridge
 docker run -d -t --network test-bridge --name test-bridge2 busybox	//创建容器test-bridge2并指定test-bridge网络
@@ -842,6 +846,14 @@ PING test-bridge2 (172.18.0.2): 56 data bytes
 64 bytes from 172.18.0.2: seq=2 ttl=64 time=0.189 ms
 64 bytes from 172.18.0.2: seq=3 ttl=64 time=0.191 ms
 
+```
+
+##### 创建overlay网络
+
+> **docker network create -d overlay**
+
+```shell
+docker network create -d overlay test-overlay
 ```
 
 
@@ -1030,7 +1042,74 @@ virbr0		8000.525400e3753a	yes		virbr0-nic
    virbr0		8000.525400e3753a	yes		virbr0-nic
    ```
 
-   
+
+
+
+### host（共享主机网络）
+
+> --network host 容器共享主机网络
+
+```shell
+docker run -t -d --network host --name test-host2 centos
+[root@org-oz ~]# docker exec test-host2 ip addr
+。。。
+6: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:da:8e:cf:a8 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:daff:fe8e:cfa8/64 scope link 
+       valid_lft forever preferred_lft forever
+。。。
+62: veth40d2b49@if61: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default 
+    link/ether fe:2e:47:43:24:2e brd ff:ff:ff:ff:ff:ff link-netnsid 6
+    inet6 fe80::fc2e:47ff:fe43:242e/64 scope link 
+       valid_lft forever preferred_lft forever
+63: br-3b3050dd0a90: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:94:82:f5:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.1/16 scope global br-3b3050dd0a90
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:94ff:fe82:f502/64 scope link 
+       valid_lft forever preferred_lft forever
+。。。
+[root@org-oz ~]# ip addr
+。。。
+6: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:da:8e:cf:a8 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:daff:fe8e:cfa8/64 scope link 
+       valid_lft forever preferred_lft forever
+。。。
+62: veth40d2b49@if61: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default 
+    link/ether fe:2e:47:43:24:2e brd ff:ff:ff:ff:ff:ff link-netnsid 6
+    inet6 fe80::fc2e:47ff:fe43:242e/64 scope link 
+       valid_lft forever preferred_lft forever
+63: br-3b3050dd0a90: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:94:82:f5:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.1/16 scope global br-3b3050dd0a90
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:94ff:fe82:f502/64 scope link 
+       valid_lft forever preferred_lft forever
+。。。
+
+```
+
+### none（无网络）
+
+> --network none仅可以通过exec访问
+
+```shell
+[root@org-oz ~]# docker run -t -d --network none --name test-none2 busybox
+[root@org-oz ~]# docker exec test-none2 ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+```
+
+
 
 ### 容器之间的link
 
@@ -1102,6 +1181,17 @@ PING test2 (172.17.0.4) 56(84) bytes of data.
 #### 创建nginx容器
 
 ```shell
-
+docker run -d -t -p 8989:80 --network test-bridge --name test-nginx2 nginx	//创建容器并指定80端口映射到本地8989端口
 ```
 
+
+
+### Overlay和Underlay
+
+![1572684247429](Docker.assets/1572684247429.png)
+
+
+
+#### VXLAN
+
+![1572685705130](Docker.assets/1572685705130.png)

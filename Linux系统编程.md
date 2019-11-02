@@ -840,6 +840,24 @@ void stdout_dev()
 
 ```
 
+#### link和unlink（创建硬连接和删除硬连接）
+
+> ![1572634803536](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572634803536.png)
+
+```c
+
+```
+
+
+
+#### symlink和readlink（创建软连接和读取软连接）
+
+> ![1572634572946](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572634572946.png)
+
+```c
+
+```
+
 
 
 ### 共享内存（shared memory）
