@@ -1195,3 +1195,507 @@ docker run -d -t -p 8989:80 --network test-bridge --name test-nginx2 nginx	//创
 #### VXLAN
 
 ![1572685705130](Docker.assets/1572685705130.png)
+
+
+
+## Docker分布式
+
+### docker-machine
+
+> docker-machine用于管理和创建已经安装好docker的虚拟机，可用于本地主机也可用于云主机。在linux宿主机中，通常docker-machine和virtualbox配合使用，可创建一台或多台安装好docker的虚拟机，且可增删改查。docker-machine也可与各大云平台配合使用，可创建一台或多台安装好docker的云主机，且可增删改查。
+
+> Usage: docker-machine [OPTIONS] COMMAND [arg...]
+>
+> Create and manage machines running Docker.
+>
+> Version: 0.16.2, build bd45ab13
+>
+> Author:
+>   Docker Machine Contributors - <https://github.com/docker/machine>
+>
+> Options:
+>   --debug, -D					Enable debug mode
+>   --storage-path, -s "/root/.docker/machine"	Configures storage path [$MACHINE_STORAGE_PATH]
+>   --tls-ca-cert 				CA to verify remotes against [$MACHINE_TLS_CA_CERT]
+>   --tls-ca-key 					Private key to generate certificates [$MACHINE_TLS_CA_KEY]
+>   --tls-client-cert 				Client cert to use for TLS [$MACHINE_TLS_CLIENT_CERT]
+>   --tls-client-key 				Private key used in client TLS auth [$MACHINE_TLS_CLIENT_KEY]
+>   --github-api-token 				Token to use for requests to the Github API [$MACHINE_GITHUB_API_TOKEN]
+>   --native-ssh					Use the native (Go-based) SSH implementation. [$MACHINE_NATIVE_SSH]
+>   --bugsnag-api-token 				BugSnag API token for crash reporting [$MACHINE_BUGSNAG_API_TOKEN]
+>   --help, -h					show help
+>   --version, -v					print the version
+>
+> Commands:
+>   active		Print which machine is active
+>   config		Print the connection config for machine
+>   create		Create a machine
+>   env			Display the commands to set up the environment for the Docker client
+>   inspect		Inspect information about a machine
+>   ip			Get the IP address of a machine
+>   kill			Kill a machine
+>   ls			List machines
+>   provision		Re-provision existing machines
+>   regenerate-certs	Regenerate TLS Certificates for a machine
+>   restart		Restart a machine
+>   rm			Remove a machine
+>   ssh			Log into or run a command on a machine with SSH.
+>   scp			Copy files between machines
+>   mount			Mount or unmount a directory from a machine with SSHFS.
+>   start			Start a machine
+>   status		Get the status of a machine
+>   stop			Stop a machine
+>   upgrade		Upgrade a machine to the latest version of Docker
+>   url			Get the URL of a machine
+>   version		Show the Docker Machine version or a machine docker version
+>   help			Shows a list of commands or help for one command
+
+#### docker-machine+virtualbox
+
+##### create
+
+> Usage: docker-machine create [OPTIONS] [arg...]
+>
+> Create a machine
+>
+> Description:
+>    Run 'docker-machine create --driver name --help' to include the create flags for that driver in the help text.
+>
+> Options:
+>
+>    --driver, -d "virtualbox"										Driver to create machine with. [$MACHINE_DRIVER]
+>    --engine-env [--engine-env option --engine-env option]						Specify environment variables to set in the engine
+>    --engine-insecure-registry [--engine-insecure-registry option --engine-insecure-registry option]	Specify insecure registries to allow with the created engine
+>    --engine-install-url "https://get.docker.com"							Custom URL to use for engine installation [$MACHINE_DOCKER_INSTALL_URL]
+>    --engine-label [--engine-label option --engine-label option]						Specify labels for the created engine
+>    --engine-opt [--engine-opt option --engine-opt option]						Specify arbitrary flags to include with the created engine in the form flag=value
+>    --engine-registry-mirror [--engine-registry-mirror option --engine-registry-mirror option]		Specify registry mirrors to use [$ENGINE_REGISTRY_MIRROR]
+>    --engine-storage-driver 										Specify a storage driver to use with the engine
+>    --swarm												Configure Machine to join a Swarm cluster
+>    --swarm-addr 											addr to advertise for Swarm (default: detect and use the machine IP)
+>    --swarm-discovery 											Discovery service to use with Swarm
+>    --swarm-experimental											Enable Swarm experimental features
+>    --swarm-host "tcp://0.0.0.0:3376"									ip/socket to listen on for Swarm master
+>    --swarm-image "swarm:latest"										Specify Docker image to use for Swarm [$MACHINE_SWARM_IMAGE]
+>    --swarm-join-opt [--swarm-join-opt option --swarm-join-opt option]					Define arbitrary flags for Swarm join
+>    --swarm-master											Configure Machine to be a Swarm master
+>    --swarm-opt [--swarm-opt option --swarm-opt option]							Define arbitrary flags for Swarm master
+>    --swarm-strategy "spread"										Define a default scheduling strategy for Swarm
+>    --tls-san [--tls-san option --tls-san option]							Support extra SANs for TLS certs
+>    --virtualbox-boot2docker-url 									The URL of the boot2docker image. Defaults to the latest available version [$VIRTUALBOX_BOOT2DOCKER_URL]
+>    --virtualbox-cpu-count "1"										number of CPUs for the machine (-1 to use the number of CPUs available) [$VIRTUALBOX_CPU_COUNT]
+>    --virtualbox-disk-size "20000"									Size of disk for host in MB [$VIRTUALBOX_DISK_SIZE]
+>    --virtualbox-host-dns-resolver									Use the host DNS resolver [$VIRTUALBOX_HOST_DNS_RESOLVER]
+>    --virtualbox-hostonly-cidr "192.168.99.1/24"								Specify the Host Only CIDR [$VIRTUALBOX_HOSTONLY_CIDR]
+>    --virtualbox-hostonly-nicpromisc "deny"								Specify the Host Only Network Adapter Promiscuous Mode [$VIRTUALBOX_HOSTONLY_NIC_PROMISC]
+>    --virtualbox-hostonly-nictype "82540EM"								Specify the Host Only Network Adapter Type [$VIRTUALBOX_HOSTONLY_NIC_TYPE]
+>    --virtualbox-hostonly-no-dhcp									Disable the Host Only DHCP Server [$VIRTUALBOX_HOSTONLY_NO_DHCP]
+>    --virtualbox-import-boot2docker-vm 									The name of a Boot2Docker VM to import [$VIRTUALBOX_BOOT2DOCKER_IMPORT_VM]
+>    --virtualbox-memory "1024"										Size of memory for host in MB [$VIRTUALBOX_MEMORY_SIZE]
+>    --virtualbox-nat-nictype "82540EM"									Specify the Network Adapter Type [$VIRTUALBOX_NAT_NICTYPE]
+>    --virtualbox-no-dns-proxy										Disable proxying all DNS requests to the host [$VIRTUALBOX_NO_DNS_PROXY]
+>    --virtualbox-no-share										Disable the mount of your home directory [$VIRTUALBOX_NO_SHARE]
+>    --virtualbox-no-vtx-check										Disable checking for the availability of hardware virtualization before the vm is started [$VIRTUALBOX_NO_VTX_CHECK]
+>    --virtualbox-share-folder 										Mount the specified directory instead of the default home location. Format: dir:name [$VIRTUALBOX_SHARE_FOLDER]
+>    --virtualbox-ui-type "headless"									Specify the UI Type: (gui|sdl|headless|separate) [$VIRTUALBOX_UI_TYPE]
+
+###### 创建多台安装好docker虚拟机
+
+```shell
+eval $(seq -s " && " -f "docker-machine create test%g" 2 6)
+[root@localhost ozcomcn]# docker-machine ls
+NAME    ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER     ERRORS
+main    -        virtualbox   Running   tcp://192.168.99.103:2376           v19.03.4   
+test2   -        virtualbox   Running   tcp://192.168.99.104:2376           v19.03.4   
+test3   -        virtualbox   Running   tcp://192.168.99.105:2376           v19.03.4   
+test4   -        virtualbox   Running   tcp://192.168.99.106:2376           v19.03.4   
+test5   -        virtualbox   Running   tcp://192.168.99.107:2376           v19.03.4   
+test6   -        virtualbox   Running   tcp://192.168.99.108:2376           v19.03.4 
+```
+
+###### 使用本地主机docker client管理远程docker server
+
+```shell
+[root@localhost ozcomcn]# docker-machine env main
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.99.103:2376"
+export DOCKER_CERT_PATH="/root/.docker/machine/machines/main"
+export DOCKER_MACHINE_NAME="main"
+# Run this command to configure your shell: 
+# eval $(docker-machine env main)
+[root@localhost ozcomcn]# eval $(docker-machine env main)
+[root@localhost ozcomcn]# docker version
+Client: Docker Engine - Community
+ Version:           19.03.5-beta1
+ API version:       1.40
+ Go version:        go1.12.12
+ Git commit:        4fe4dc73f6
+ Built:             Wed Oct 30 00:57:11 2019
+ OS/Arch:           linux/amd64
+ Experimental:      false
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          19.03.4
+  API version:      1.40 (minimum version 1.12)
+  Go version:       go1.12.10
+  Git commit:       9013bf583a
+  Built:            Fri Oct 18 15:55:51 2019
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v1.2.10
+  GitCommit:        b34a5c8af56e510852c35414db4c1f4fa6172339
+ runc:
+  Version:          1.0.0-rc8+dev
+  GitCommit:        3e425f80a8c931f88e6d94a8c831b9d5aa481657
+ docker-init:
+  Version:          0.18.0
+  GitCommit:        fec3683
+  [root@localhost ozcomcn]# docker-machine ssh main
+   ( '>')
+  /) TC (\   Core is distributed with ABSOLUTELY NO WARRANTY.
+ (/-_--_-\)           www.tinycorelinux.net
+
+docker@main:~$ docker version
+Client: Docker Engine - Community
+ Version:           19.03.4
+ API version:       1.40
+ Go version:        go1.12.10
+ Git commit:        9013bf583a
+ Built:             Fri Oct 18 15:49:05 2019
+ OS/Arch:           linux/amd64
+ Experimental:      false
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          19.03.4
+  API version:      1.40 (minimum version 1.12)
+  Go version:       go1.12.10
+  Git commit:       9013bf583a
+  Built:            Fri Oct 18 15:55:51 2019
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v1.2.10
+  GitCommit:        b34a5c8af56e510852c35414db4c1f4fa6172339
+ runc:
+  Version:          1.0.0-rc8+dev
+  GitCommit:        3e425f80a8c931f88e6d94a8c831b9d5aa481657
+ docker-init:
+  Version:          0.18.0
+  GitCommit:        fec3683
+
+```
+
+
+
+### swarm
+
+> Docker编排工具，用于管理分布式中Docker主机节点
+
+> Usage:	docker swarm COMMAND
+>
+> Manage Swarm
+>
+> Commands:
+>   ca          Display and rotate the root CA
+>   init        Initialize a swarm
+>   join        Join a swarm as a node and/or manager
+>   join-token  Manage join tokens
+>   leave       Leave the swarm
+>   unlock      Unlock swarm
+>   unlock-key  Manage the unlock key
+>   update      Update the swarm
+>
+> Run 'docker swarm COMMAND --help' for more information on a command.
+
+#### init（初始化swarm）
+
+> Usage:	docker swarm init [OPTIONS]
+>
+> Initialize a swarm
+>
+> Options:
+>       --advertise-addr string                  Advertised address (format: <ip|interface>[:port])
+>       --autolock                               Enable manager autolocking (requiring an unlock key to start a stopped manager)
+>       --availability string                    Availability of the node ("active"|"pause"|"drain") (default "active")
+>       --cert-expiry duration                   Validity period for node certificates (ns|us|ms|s|m|h) (default 2160h0m0s)
+>       --data-path-addr string                  Address or interface to use for data path traffic (format: <ip|interface>)
+>       --data-path-port uint32                  Port number to use for data path traffic (1024 - 49151). If no value is set or is set to 0, the default
+>                                                port (4789) is used.
+>       --default-addr-pool ipNetSlice           default address pool in CIDR format (default [])
+>       --default-addr-pool-mask-length uint32   default address pool subnet mask length (default 24)
+>       --dispatcher-heartbeat duration          Dispatcher heartbeat period (ns|us|ms|s|m|h) (default 5s)
+>       --external-ca external-ca                Specifications of one or more certificate signing endpoints
+>       --force-new-cluster                      Force create a new cluster from current state
+>       --listen-addr node-addr                  Listen address (format: <ip|interface>[:port]) (default 0.0.0.0:2377)
+>       --max-snapshots uint                     Number of additional Raft snapshots to retain
+>       --snapshot-interval uint                 Number of log entries between Raft snapshots (default 10000)
+>       --task-history-limit int                 Task history retention limit (default 5)
+
+##### 初始化swarm
+
+```shell
+[root@localhost ozcomcn]# docker swarm init --advertise-addr 192.168.0.106
+Swarm initialized: current node (j2ige0rwmbvgujz0xsr7owkgo) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2v326p980ual324i20peehpvrhwydb6q5nujuwpj3lqosme2mq-bluwh8uqvibsxqouwfzm0zl1r 192.168.0.106:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+```
+
+#### join（将节点加入swarm）
+
+> Usage:	docker swarm join [OPTIONS] HOST:PORT
+>
+> Join a swarm as a node and/or manager
+>
+> Options:
+>       --advertise-addr string   Advertised address (format: <ip|interface>[:port])
+>       --availability string     Availability of the node ("active"|"pause"|"drain") (default "active")
+>       --data-path-addr string   Address or interface to use for data path traffic (format: <ip|interface>)
+>       --listen-addr node-addr   Listen address (format: <ip|interface>[:port]) (default 0.0.0.0:2377)
+>       --token string            Token for entry into the swarm
+
+```shell
+[root@localhost ozcomcn]# docker-machine ssh test2
+   ( '>')
+  /) TC (\   Core is distributed with ABSOLUTELY NO WARRANTY.
+ (/-_--_-\)           www.tinycorelinux.net
+
+docker@test2:~$ docker swarm join --token SWMTKN-1-2v326p980ual324i20peehpvrhwydb6q5nujuwpj3lqosme2mq-bluwh8uqvibsxqouwfzm0zl1r 192.168.0.106:2377
+This node joined a swarm as a worker.
+[root@localhost ozcomcn]# docker-machine ssh test3
+   ( '>')
+  /) TC (\   Core is distributed with ABSOLUTELY NO WARRANTY.
+ (/-_--_-\)           www.tinycorelinux.net
+
+docker@test3:~$ docker swarm join --token SWMTKN-1-2v326p980ual324i20peehpvrhwydb6q5nujuwpj3lqosme2mq-bluwh8uqvibsxqouwfzm0zl1r 192.168.0.106:2377
+This node joined a swarm as a worker.
+。。。
+```
+
+
+
+#### docker node（管理swarm节点）
+
+> Usage:	docker node COMMAND
+>
+> Manage Swarm nodes
+>
+> Commands:
+>   demote      Demote one or more nodes from manager in the swarm
+>   inspect     Display detailed information on one or more nodes
+>   ls          List nodes in the swarm
+>   promote     Promote one or more nodes to manager in the swarm
+>   ps          List tasks running on one or more nodes, defaults to current node
+>   rm          Remove one or more nodes from the swarm
+>   update      Update a node
+>
+> Run 'docker node COMMAND --help' for more information on a command.
+
+##### ls（查看节点）
+
+```shell
+[root@localhost ozcomcn]# docker node ls
+ID                            HOSTNAME                STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+j2ige0rwmbvgujz0xsr7owkgo *   localhost.localdomain   Ready               Active              Leader              19.03.5-beta1
+n9heewu9bqdqk8o06yi90zhih     test2                   Ready               Active                                  19.03.4
+oyaasud2ftjnp5fluggk4iz78     test3                   Ready               Active                                  19.03.4
+4983h6udw4dzbbbm0k1yj5ssz     test4                   Ready               Active                                  19.03.4
+r32u279aeenutzmsnrxtmet9r     test5                   Ready               Active                                  19.03.4
+yxtx6om54i087mf2j0tsogvl0     test6                   Ready               Active                                  19.03.4
+```
+
+
+
+#### docker service（服务管理）
+
+> 将service分布到各个docker节点上运行，且可以增删改查
+
+> Usage:	docker service COMMAND
+>
+> Manage services
+>
+> Commands:
+>   create      Create a new service
+>   inspect     Display detailed information on one or more services
+>   logs        Fetch the logs of a service or task
+>   ls          List services
+>   ps          List the tasks of one or more services
+>   rm          Remove one or more services
+>   rollback    Revert changes to a service's configuration
+>   scale       Scale one or multiple replicated services
+>   update      Update a service
+>
+> Run 'docker service COMMAND --help' for more information on a command.
+
+##### create（创建服务）
+
+> docker service create创建docker容器
+
+> Usage:	docker service create [OPTIONS] IMAGE [COMMAND] [ARG...]
+>
+> Create a new service
+>
+> Options:
+>       --config config                      Specify configurations to expose to the service
+>       --constraint list                    Placement constraints
+>       --container-label list               Container labels
+>       --credential-spec credential-spec    Credential spec for managed service account (Windows only)
+>   -d, --detach                             Exit immediately instead of waiting for the service to converge
+>       --dns list                           Set custom DNS servers
+>       --dns-option list                    Set DNS options
+>       --dns-search list                    Set custom DNS search domains
+>       --endpoint-mode string               Endpoint mode (vip or dnsrr) (default "vip")
+>       --entrypoint command                 Overwrite the default ENTRYPOINT of the image
+>   -e, --env list                           Set environment variables
+>       --env-file list                      Read in a file of environment variables
+>       --generic-resource list              User defined resources
+>       --group list                         Set one or more supplementary user groups for the container
+>       --health-cmd string                  Command to run to check health
+>       --health-interval duration           Time between running the check (ms|s|m|h)
+>       --health-retries int                 Consecutive failures needed to report unhealthy
+>       --health-start-period duration       Start period for the container to initialize before counting retries towards unstable
+>                                            (ms|s|m|h)
+>       --health-timeout duration            Maximum time to allow one check to run (ms|s|m|h)
+>       --host list                          Set one or more custom host-to-IP mappings (host:ip)
+>       --hostname string                    Container hostname
+>       --init                               Use an init inside each service container to forward signals and reap processes
+>       --isolation string                   Service container isolation mode
+>   -l, --label list                         Service labels
+>       --limit-cpu decimal                  Limit CPUs
+>       --limit-memory bytes                 Limit Memory
+>       --log-driver string                  Logging driver for service
+>       --log-opt list                       Logging driver options
+>       --mode string                        Service mode (replicated or global) (default "replicated")
+>       --mount mount                        Attach a filesystem mount to the service
+>       --name string                        Service name
+>       --network network                    Network attachments
+>       --no-healthcheck                     Disable any container-specified HEALTHCHECK
+>       --no-resolve-image                   Do not query the registry to resolve image digest and supported platforms
+>       --placement-pref pref                Add a placement preference
+>   -p, --publish port                       Publish a port as a node port
+>   -q, --quiet                              Suppress progress output
+>       --read-only                          Mount the container's root filesystem as read only
+>       --replicas uint                      Number of tasks
+>       --replicas-max-per-node uint         Maximum number of tasks per node (default 0 = unlimited)
+>       --reserve-cpu decimal                Reserve CPUs
+>       --reserve-memory bytes               Reserve Memory
+>       --restart-condition string           Restart when condition is met ("none"|"on-failure"|"any") (default "any")
+>       --restart-delay duration             Delay between restart attempts (ns|us|ms|s|m|h) (default 5s)
+>       --restart-max-attempts uint          Maximum number of restarts before giving up
+>       --restart-window duration            Window used to evaluate the restart policy (ns|us|ms|s|m|h)
+>       --rollback-delay duration            Delay between task rollbacks (ns|us|ms|s|m|h) (default 0s)
+>       --rollback-failure-action string     Action on rollback failure ("pause"|"continue") (default "pause")
+>       --rollback-max-failure-ratio float   Failure rate to tolerate during a rollback (default 0)
+>       --rollback-monitor duration          Duration after each task rollback to monitor for failure (ns|us|ms|s|m|h) (default 5s)
+>       --rollback-order string              Rollback order ("start-first"|"stop-first") (default "stop-first")
+>       --rollback-parallelism uint          Maximum number of tasks rolled back simultaneously (0 to roll back all at once)
+>                                            (default 1)
+>       --secret secret                      Specify secrets to expose to the service
+>       --stop-grace-period duration         Time to wait before force killing a container (ns|us|ms|s|m|h) (default 10s)
+>       --stop-signal string                 Signal to stop the container
+>       --sysctl list                        Sysctl options
+>   -t, --tty                                Allocate a pseudo-TTY
+>       --update-delay duration              Delay between updates (ns|us|ms|s|m|h) (default 0s)
+>       --update-failure-action string       Action on update failure ("pause"|"continue"|"rollback") (default "pause")
+>       --update-max-failure-ratio float     Failure rate to tolerate during an update (default 0)
+>       --update-monitor duration            Duration after each task update to monitor for failure (ns|us|ms|s|m|h) (default 5s)
+>       --update-order string                Update order ("start-first"|"stop-first") (default "stop-first")
+>       --update-parallelism uint            Maximum number of tasks updated simultaneously (0 to update all at once) (default 1)
+>   -u, --user string                        Username or UID (format: <name|uid>[:<group|gid>])
+>       --with-registry-auth                 Send registry authentication details to swarm agents
+>   -w, --workdir string                     Working directory inside the container
+
+###### 创建服务
+
+> docker service会把创建的容器随机的放在某个swarm节点上运行
+
+```shell
+[root@localhost ozcomcn]# docker service create --name test-bybx busybox sh -c "while true;do sleep 30m;done"
+usyqk2sykc276afj6zlzpamp3
+overall progress: 1 out of 1 tasks 
+1/1: running   [==================================================>] 
+verify: Service converged 
+
+```
+
+
+
+##### scale（服务水平扩展）
+
+> 用于服务扩展，即使某个节点在运行服务的过程中出现错误，service会自动创一个服务，运行在另一个状态良好的节点上，以满足scale的服务数量
+
+> Usage:	docker service scale SERVICE=REPLICAS [SERVICE=REPLICAS...]
+>
+> Scale one or multiple replicated services
+>
+> Options:
+>   -d, --detach   Exit immediately instead of waiting for the service to converge
+
+```shell
+[root@localhost ozcomcn]# docker service scale test-bybx=5
+test-bybx scaled to 5
+overall progress: 5 out of 5 tasks 
+1/5: preparing [=================================>                 ] 
+2/5: starting container failed: OCI runtime create failed: container_linux.go:3… 
+3/5: running   [==================================================>] 
+4/5: running   [==================================================>] 
+5/5: running   [==================================================>] 
+verify: Service converged 
+[root@localhost ozcomcn]# docker service ps test-bybx 
+ID                  NAME                IMAGE               NODE                    DESIRED STATE       CURRENT STATE            ERROR                              PORTS
+pejfanlj6qbe        test-bybx.1         busybox:latest      test5                   Running             Running 19 minutes ago                                      
+z5dcv1unomc1        test-bybx.2         busybox:latest      test3                   Running             Running 13 minutes ago                                      
+sb006slszjgn         \_ test-bybx.2     busybox:latest      localhost.localdomain   Shutdown            Failed 13 minutes ago    "starting container failed: OC…"   
+1c4zyxip6ktf         \_ test-bybx.2     busybox:latest      localhost.localdomain   Shutdown            Failed 14 minutes ago    "starting container failed: OC…"   
+srapq5yk615n         \_ test-bybx.2     busybox:latest      localhost.localdomain   Shutdown            Failed 14 minutes ago    "starting container failed: OC…"   
+xaeggk8e7e4h        test-bybx.3         busybox:latest      test2                   Running             Running 14 minutes ago                                      
+q88lhfyjm6g8        test-bybx.6         busybox:latest      test6                   Running             Running 14 minutes ago                                      
+ilqe2ippx331        test-bybx.8         busybox:latest      localhost.localdomain   Shutdown            Failed 13 minutes ago    "starting container failed: OC…"   
+zspkumf7q2zj         \_ test-bybx.8     busybox:latest      localhost.localdomain   Shutdown            Failed 14 minutes ago    "starting container failed: OC…"   
+evl280pfa2ky         \_ test-bybx.8     busybox:latest      localhost.localdomain   Shutdown            Failed 14 minutes ago    "starting container failed: OC…"   
+kgxz37pytrnb        test-bybx.9         busybox:latest      test4                   Running             Running 14 minutes ago      
+[root@localhost ozcomcn]# docker service rm test-bybx	//删除服务
+```
+
+
+
+### 集群服务间通信之Routing Mesh
+
+> ![1572787130444](Docker.assets/1572787130444.png)
+
+> ![1572788621790](Docker.assets/1572788621790.png)
+
+> ![1572788707740](Docker.assets/1572788707740.png)
+
+> ![1572788799735](Docker.assets/1572788799735.png)
+
+> ![1572789037838](Docker.assets/1572789037838.png)
+
+> ![1572790192446](Docker.assets/1572790192446.png)
+
+
+
+
+
+## 镜像加速器
+
+### 配置镜像加速器
+
+您可以通过修改daemon配置文件/etc/docker/daemon.json来使用加速器
+
+```shell
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://lxicfuki.mirror.aliyuncs.com"]
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```

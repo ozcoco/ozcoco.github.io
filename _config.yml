@@ -1,1 +1,24 @@
 theme: jekyll-theme-cayman
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - Android编程.md
+  - C++编程.md
+  - CppDesignPattern.md
+  - Docker.md
+  - Flutter编程.md
+  - Interview.md
+  - iptables.md
+  - Java编程.md
+  - Linux磁盘管理.md
+  - Linux系统编程.md
+  - Linux网络编程.md
+  - MCU编程.md
+  - Script编程.md
+  - Shell编程.md
+  - SpringBoot入门简介.md
+  - SpringBoot高级教程.md
+  - SQL编程.md
+  - 数据结构与算法.md
+  - 音视频编解码.md
