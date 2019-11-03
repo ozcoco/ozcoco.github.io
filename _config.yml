@@ -1,4 +1,8 @@
 theme: jekyll-theme-cayman
+name: Ozcomcn's Note
+description: Study notes
+url: https://ozcoco.github.io
+markdown: kramdown
 plugins:
   - jekyll-relative-links
 relative_links:
