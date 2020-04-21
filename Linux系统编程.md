@@ -512,7 +512,7 @@ void print_environ()
 
 ### 文件操作
 
-![1572612752969](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572612752969.png)
+![1572612752969](C:\Users\Administrator\Desktop\1572612752969.png)
 
 #### 创建文件
 
@@ -810,7 +810,7 @@ void stdout_dev()
 
 #### fcntl（修改已经打开文件的属性）
 
-> ![1572614202968](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572614202968.png)
+> ![1572614202968](C:\Users\Administrator\Desktop\1572614202968.png)
 
 ```
 
@@ -818,7 +818,7 @@ void stdout_dev()
 
 #### ioctl（驱动设备操作或外围设备操作）
 
-> ![1572614274071](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572614274071.png)
+> ![1572614274071](C:\Users\Administrator\Desktop\1572614274071.png)
 
 ```c
 
@@ -826,7 +826,7 @@ void stdout_dev()
 
 #### dup和dup2（文件重定向）
 
-> ![1572614788016](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572614788016.png)
+> ![1572614788016](C:\Users\Administrator\Desktop\1572614788016.png)
 
 ```c
 
@@ -834,7 +834,7 @@ void stdout_dev()
 
 #### lseek（定位文件位置）
 
-> ![1572632205025](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572632205025.png)
+> ![1572632205025](C:\Users\Administrator\Desktop\1572632205025.png)
 
 ```c
 
@@ -842,7 +842,7 @@ void stdout_dev()
 
 #### link和unlink（创建硬连接和删除硬连接）
 
-> ![1572634803536](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572634803536.png)
+> ![1572634803536](C:\Users\Administrator\Desktop\1572634803536.png)
 
 ```c
 
@@ -852,7 +852,7 @@ void stdout_dev()
 
 #### symlink和readlink（创建软连接和读取软连接）
 
-> ![1572634572946](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572634572946.png)
+> ![1572634572946](C:\Users\Administrator\Desktop\1572634572946.png)
 
 ```c
 
@@ -996,15 +996,15 @@ void msg_queue()
 ### 内存映射（mmap） 
 
 
-> ![1572632609052](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572632609052.png)
-> ![1572632942205](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572632942205.png)
+> ![1572632609052](C:\Users\Administrator\Desktop\1572632609052.png)
+> ![1572632942205](C:\Users\Administrator\Desktop\1572632942205.png)
 
 
-> ![1572632499901](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572632499901.png)
+> ![1572632499901](C:\Users\Administrator\Desktop\1572632499901.png)
 >
 > 
 
-> ![1572632392157](Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B.assets/1572632392157.png)
+> ![1572632392157](C:\Users\Administrator\Desktop\1572632392157.png)
 
 ```c
 
@@ -1156,6 +1156,55 @@ void sigqueue_with_pure_c()
 
     sigqueue(getpid(), SIGBUS, mysigVal);
 
+}
+```
+
+### setitimer
+
+> setitimer实现循环定时
+
+```c++
+#include <iostream>
+#include <cstdio>
+#include <unistd.h>
+#include <wait.h>
+#include <csignal>
+#include <ctime>
+#include <sys/time.h>
+
+void handle_sig (int sig)
+{
+
+  struct itimerval val{};
+
+  getitimer (ITIMER_REAL, &val);
+
+  printf ("sec: %ld \t usec: %ld \n", val.it_value.tv_sec, val.it_value.tv_usec);
+
+}
+
+void interval_sig ()
+{
+  signal (SIGALRM, handle_sig);
+
+  struct itimerval curr{}, old{};
+  curr.it_value.tv_sec = 3;
+  curr.it_value.tv_usec = 0;
+  curr.it_interval.tv_sec = 3;
+  curr.it_interval.tv_usec = 0;
+
+  setitimer (ITIMER_REAL, &curr, &old);
+
+}
+
+int main ()
+{
+
+  interval_sig ();
+
+  for (;;);
+
+  return 0;
 }
 ```
 
